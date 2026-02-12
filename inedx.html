@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dompetku V2 - Saldo Otomatis</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        
+        .kartu-saldo { background: #2c3e50; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        .kartu-saldo h1 { margin: 10px 0; font-size: 28px; }
+
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 95%; margin-bottom: 10px; }
+        
+        .btn-simpan { padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        
+        ul { list-style-type: none; padding: 0; margin-top: 20px; }
+        li { background: #fff; margin-bottom: 8px; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 8px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* Warna untuk jenis transaksi */
+        .masuk { border-left-color: #2ecc71; color: #27ae60; }
+        .keluar { border-left-color: #e74c3c; color: #c0392b; }
+        
+        .btn-hapus { background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="kartu-saldo">
+        <small>Sisa Saldo Saya:</small>
+        <h1 id="saldo-akhir">Rp 0</h1>
+    </div>
+    
+    <input type="text" id="keterangan" placeholder="Keterangan (Gaji, Makan, dll)">
+    <input type="number" id="nominal" placeholder="Nominal (angka)">
+    <select id="jenis">
+        <option value="masuk">Uang Masuk (+)</option>
+        <option value="keluar">Uang Keluar (-)</option>
+    </select>
+    <button class="btn-simpan" onclick="tambahTransaksi()">Catat Transaksi</button>
+
+    <h3>Riwayat Transaksi:</h3>
+    <ul id="daftar-transaksi"></ul>
+</div>
+
+<script>
+    let dataKeuangan = JSON.parse(localStorage.getItem("dataDompetV2")) || [];
+
+    function updateTampilan() {
+        const daftar = document.getElementById("daftar-transaksi");
+        const saldoTeks = document.getElementById("saldo-akhir");
+        let totalSaldo = 0;
+
+        daftar.innerHTML = "";
+
+        dataKeuangan.forEach((item, index) => {
+            const li = document.createElement("li");
+            li.className = item.tipe; // Memberi warna hijau atau merah
+            
+            // Logika hitung saldo
+            if(item.tipe === "masuk") {
+                totalSaldo += item.harga;
+            } else {
+                totalSaldo -= item.harga;
+            }
+
+            li.innerHTML = `
+                <span>${item.nama}</span>
+                <div>
+                    <b>${item.tipe === 'masuk' ? '+' : '-'} Rp ${item.harga.toLocaleString()}</b>
+                    <button class="btn-hapus" onclick="hapusData(${index})">x</button>
+                </div>
+            `;
+            daftar.appendChild(li);
+        });
+
+        saldoTeks.innerText = "Rp " + totalSaldo.toLocaleString();
+        localStorage.setItem("dataDompetV2", JSON.stringify(dataKeuangan));
+    }
+
+    function tambahTransaksi() {
+        const ket = document.getElementById("keterangan");
+        const nom = document.getElementById("nominal");
+        const tipe = document.getElementById("jenis");
+
+        if (ket.value === "" || nom.value === "") return alert("Lengkapi data!");
+
+        dataKeuangan.push({
+            nama: ket.value,
+            harga: parseInt(nom.value),
+            tipe: tipe.value
+        });
+
+        ket.value = ""; nom.value = "";
+        updateTampilan();
+    }
+
+    function hapusData(index) {
+        dataKeuangan.splice(index, 1);
+        updateTampilan();
+    }
+
+    updateTampilan();
+</script>
+
+</body>
+</html>
